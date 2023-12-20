@@ -80,6 +80,7 @@ async Task TestPostgres()
                     throw new Exception($"Invalid iter value: {iter}, should be: {iteration}");
                 }
             }
+            reader.Close();
 
             // select data
             var countCommand = client.CreateCommand();
@@ -92,6 +93,7 @@ async Task TestPostgres()
                 var count = countReader.GetInt32(0);
                 Console.WriteLine($"total count: {count}");
             }
+            reader.Close();
 
             sw.Stop();
 

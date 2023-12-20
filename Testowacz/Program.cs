@@ -24,7 +24,8 @@ async Task TestPostgres()
 
     // create table
     var createTableCommand = client.CreateCommand();
-    createTableCommand.CommandText = "CREATE TABLE IF NOT EXISTS test_table (id serial PRIMARY KEY, iter integer NOT NULL)";
+    // guid primary key
+    createTableCommand.CommandText = "CREATE TABLE IF NOT EXISTS test_table2 (guid uuid PRIMARY KEY, time timestamp, iter integer)";
     await createTableCommand.ExecuteNonQueryAsync();
 
     var sw = new Stopwatch();
@@ -51,14 +52,18 @@ async Task TestPostgres()
             sw.Restart();
             Console.WriteLine($"Iteration: {iteration}");
 
+            var guid = Guid.NewGuid();
+
+            var time = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
             // insert data
             var insertCommand = client.CreateCommand();
-            insertCommand.CommandText = $"INSERT INTO test_table (iter) VALUES ({iteration})";
+            insertCommand.CommandText = $"INSERT INTO test_table2 (guid, time, iter) VALUES ('{guid}', now(), {iteration})";
             await insertCommand.ExecuteNonQueryAsync();
 
             // select data
             var selectCommand = client.CreateCommand();
-            selectCommand.CommandText = $"SELECT * FROM test_table ORDER BY id DESC LIMIT 1";
+            selectCommand.CommandText = $"SELECT guid, iter FROM test_table2 WHERE guid = '{guid}'";
             reader = await selectCommand.ExecuteReaderAsync();
 
             // verify data

@@ -47,6 +47,7 @@ async Task TestPostgres()
         }
 
         var reader = default(Npgsql.NpgsqlDataReader);
+        var countReader = default(Npgsql.NpgsqlDataReader);
 
         try
         {
@@ -80,6 +81,18 @@ async Task TestPostgres()
                 }
             }
 
+            // select data
+            var countCommand = client.CreateCommand();
+            countCommand.CommandText = $"SELECT COUNT(*) FROM test_table2";
+            countReader = await countCommand.ExecuteReaderAsync();
+
+            // verify data
+            while (countReader.Read())
+            {
+                var count = countReader.GetInt32(0);
+                Console.WriteLine($"total count: {count}");
+            }
+
             sw.Stop();
 
             Console.WriteLine($"Iteration {iteration} completed in {sw.Elapsed.TotalMilliseconds:00.00} ms");
@@ -97,6 +110,12 @@ async Task TestPostgres()
                     await reader.CloseAsync();
                     reader = null;
                 }
+                if (countReader != null)
+                {
+                    await countReader.CloseAsync();
+                    countReader = null;
+                }
+
                 client.Close();
                 client.Open();
             }
@@ -106,6 +125,10 @@ async Task TestPostgres()
             if (reader != null)
             {
                 await reader.CloseAsync();
+            }
+            if (countReader != null)
+            {
+                await countReader.CloseAsync();
             }
         }
     }

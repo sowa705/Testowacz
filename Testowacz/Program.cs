@@ -68,9 +68,11 @@ async Task TestPostgres()
 
                 if (iter != iteration)
                 {
-                    throw new Exception($"Invalid iter value: {iter}");
+                    throw new Exception($"Invalid iter value: {iter}, should be: {iteration}");
                 }
             }
+
+            await reader.CloseAsync();
 
             sw.Stop();
 

@@ -14,7 +14,7 @@ async Task TestPostgres()
 {
     var your_password = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
     var connectionString =
-        $"Server=sowapgcentral.postgres.database.azure.com;Database=postgres;Port=5432;User Id=sowa;Password={your_password};Ssl Mode=Require;";
+        $"Server=sowavirtualep.writer.postgres.database.azure.com;Database=postgres;Port=5432;User Id=sowa;Password={your_password};Ssl Mode=Require;";
 
     var client = new Npgsql.NpgsqlConnection(connectionString);
 

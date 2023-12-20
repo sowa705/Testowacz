@@ -44,6 +44,8 @@ async Task TestPostgres()
             }
         }
 
+        var reader = default(Npgsql.NpgsqlDataReader);
+
         try
         {
             sw.Restart();
@@ -56,8 +58,8 @@ async Task TestPostgres()
 
             // select data
             var selectCommand = client.CreateCommand();
-            selectCommand.CommandText = $"SELECT * FROM test_table ORDER BY iter DESC LIMIT 1";
-            var reader = await selectCommand.ExecuteReaderAsync();
+            selectCommand.CommandText = $"SELECT * FROM test_table ORDER BY id DESC LIMIT 1";
+            reader = await selectCommand.ExecuteReaderAsync();
 
             // verify data
             while (reader.Read())
@@ -72,15 +74,20 @@ async Task TestPostgres()
                 }
             }
 
-            await reader.CloseAsync();
-
             sw.Stop();
 
             Console.WriteLine($"Iteration {iteration} completed in {sw.Elapsed.TotalMilliseconds:00.00} ms");
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Console.WriteLine($"Exception: {e.Message}");
+        }
+        finally
+        {
+            if (reader != null)
+            {
+                await reader.CloseAsync();
+            }
         }
     }
 }

@@ -56,7 +56,7 @@ async Task TestPostgres()
 
             // select data
             var selectCommand = client.CreateCommand();
-            selectCommand.CommandText = $"SELECT * FROM test_table ORDER BY name DESC LIMIT 1";
+            selectCommand.CommandText = $"SELECT * FROM test_table ORDER BY iter DESC LIMIT 1";
             var reader = await selectCommand.ExecuteReaderAsync();
 
             // verify data

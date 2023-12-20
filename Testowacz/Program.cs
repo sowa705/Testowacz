@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -86,6 +87,19 @@ async Task TestPostgres()
         catch (Exception e)
         {
             Console.WriteLine($"Exception: {e.Message}");
+
+            if (e is PostgresException pe)
+            {
+                Console.WriteLine($"PostgresException: {pe.SqlState}");
+                Console.WriteLine($"Reconnecting to Postgres");
+                if (reader != null)
+                {
+                    await reader.CloseAsync();
+                    reader = null;
+                }
+                client.Close();
+                client.Open();
+            }
         }
         finally
         {

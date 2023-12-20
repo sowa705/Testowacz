@@ -69,7 +69,7 @@ async Task TestPostgres()
             // verify data
             while (reader.Read())
             {
-                var id = reader.GetInt32(0);
+                var id = reader.GetGuid(0);
                 var iter = reader.GetInt32(1);
                 Console.WriteLine($"id: {id}, iter: {iter}");
 

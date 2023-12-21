@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Data.Common;
+using System.Diagnostics;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,9 +7,30 @@ var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
 
-await TestPostgres();
+//await TestPostgres();
+
+await TestMsSql();
 
 app.Run();
+
+async Task TestMsSql()
+{
+    var connectionString =
+        $"Server=tcp:failovergroupsweden.database.windows.net,1433;Initial Catalog=sowasqldatabase;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Default\";";
+
+    var client = new Microsoft.Data.SqlClient.SqlConnection(connectionString);
+
+    client.Open();
+
+    Console.WriteLine("Connected to MsSql");
+
+    // create table
+    //var createTableCommand = client.CreateCommand();
+    // guid primary key
+    //createTableCommand.CommandText = "CREATE TABLE test_table2 (guid uniqueidentifier PRIMARY KEY, time datetimeoffset, iter integer)";
+    //await createTableCommand.ExecuteNonQueryAsync();
+    await TestDB(client);
+}
 
 
 async Task TestPostgres()
@@ -29,6 +51,14 @@ async Task TestPostgres()
     createTableCommand.CommandText = "CREATE TABLE IF NOT EXISTS test_table2 (guid uuid PRIMARY KEY, time timestamp, iter integer)";
     await createTableCommand.ExecuteNonQueryAsync();
 
+    await TestDB(client);
+}
+
+async Task TestDB(DbConnection client)
+{
+
+
+
     var sw = new Stopwatch();
 
     var iteration = 0;
@@ -46,8 +76,8 @@ async Task TestPostgres()
             }
         }
 
-        var reader = default(Npgsql.NpgsqlDataReader);
-        var countReader = default(Npgsql.NpgsqlDataReader);
+        var reader = (DbDataReader)null;
+        var countReader = (DbDataReader)null;
 
         try
         {
@@ -60,7 +90,8 @@ async Task TestPostgres()
 
             // insert data
             var insertCommand = client.CreateCommand();
-            insertCommand.CommandText = $"INSERT INTO test_table2 (guid, time, iter) VALUES ('{guid}', now(), {iteration})";
+            insertCommand.CommandText =
+                $"INSERT INTO test_table2 (guid, time, iter) VALUES ('{guid}', CURRENT_TIMESTAMP, {iteration})";
             await insertCommand.ExecuteNonQueryAsync();
 
             // select data
@@ -80,6 +111,7 @@ async Task TestPostgres()
                     throw new Exception($"Invalid iter value: {iter}, should be: {iteration}");
                 }
             }
+
             reader.Close();
 
             // select data
@@ -93,6 +125,7 @@ async Task TestPostgres()
                 var count = countReader.GetInt32(0);
                 Console.WriteLine($"total count: {count}");
             }
+
             reader.Close();
 
             sw.Stop();
@@ -103,15 +136,15 @@ async Task TestPostgres()
         {
             Console.WriteLine($"Exception: {e.Message}");
 
-            if (e is PostgresException pe)
+            if (e is PostgresException pe || e is Microsoft.Data.SqlClient.SqlException se)
             {
-                Console.WriteLine($"PostgresException: {pe.SqlState}");
-                Console.WriteLine($"Reconnecting to Postgres");
+                Console.WriteLine($"Reconnecting");
                 if (reader != null)
                 {
                     await reader.CloseAsync();
                     reader = null;
                 }
+
                 if (countReader != null)
                 {
                     await countReader.CloseAsync();
@@ -128,6 +161,7 @@ async Task TestPostgres()
             {
                 await reader.CloseAsync();
             }
+
             if (countReader != null)
             {
                 await countReader.CloseAsync();
